@@ -4,7 +4,7 @@ uses
   Sysutils;
 
 const
-  FNAME = 'mypascal.pas';
+  FNAME = 'hello.pas';
   nKeywords = 20;
   KW_START = 14;
 
@@ -30,7 +30,7 @@ begin
   else ScanningDone := Eof(fileIn);
 end;
 
-procedure GetChar;
+function GetChar: boolean;
 var
   haveChar: boolean;
 begin
@@ -52,6 +52,7 @@ begin
     if Look = ^J then
     begin
       lineno := lineno + 1;
+      col_start := 0;
       colno_prev := colno;
       colno := 0;
       _flag := true;
@@ -63,6 +64,7 @@ begin
     end;
   end
   else Look := ^@;
+  GetChar := haveChar;
 end;
 
 procedure UngetChar;
@@ -83,7 +85,7 @@ end;
 procedure Error(s: string);
 begin
   WriteLn;
-  WriteLn('Error: ', s, '.');
+  WriteLn('Error[', lineno, ',', col_start, ']:', s, '.');
 end;
 
 procedure Abort(s: string);
@@ -198,9 +200,9 @@ begin
         GetChar;
         if Look = '*' then (* confirm if it is actually a comment *)
         begin
-          while true do (* TODO fix infinite loop if the source code ends with the comment initializer *)
+          while true do
           begin
-            GetChar;
+            if not GetChar then Abort('[Lexical error] Unclosed comment');
             if Look = '*' then
             begin
               GetChar;
@@ -217,11 +219,6 @@ begin
           UngetChar;
           ok := true;
         end;
-      end
-      else if Eof(fileIn) then
-      begin
-        GetToken := false;
-        Exit;
       end
       else ok := true;
     end;
@@ -246,7 +243,7 @@ begin
       begin
         while true do
         begin
-          GetChar;
+          if not GetChar then Abort('[Lexical error] Unclosed string literal');
           if Look <> '''' then
             lexeme := lexeme + Look
           else
@@ -262,6 +259,11 @@ begin
       ']': tokenType := T_RBRACK;
       ';': tokenType := T_SEMICOLON;
     else
+      if Eof(fileIn) then
+      begin
+        GetToken := false;
+        Exit;
+      end;
       if IsValidIdentChar(Look, false) then
       begin
         lexeme := '' + Look;
