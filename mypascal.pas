@@ -4,14 +4,14 @@ uses
   Sysutils;
 
 const
-  FNAME = 'hello.pas';
-  nKeywords = 20;
+  FNAME = 'mypascal.pas';
+  nKeywords = 26;
   KW_START = 14;
 
 type
   TTokenType = (T_IDENT=0, T_NUMBER, T_STRLITERAL,
                 T_PLUS, T_MINUS, T_STAR, T_SLASH, T_EQ, T_NEQ, T_LE, T_GE, T_L, T_G, T_WALRUS,
-                T_AND, T_ARRAY, T_BEGIN, T_CASE, T_CONST, T_DO, T_ELSE, T_END, T_FUNC, T_IF, T_NIL, T_NOT, T_OF, T_OR, T_PROCEDURE, T_PROG, T_THEN, T_VAR, T_WHILE, T_WRITELN,
+                T_AND, T_ARRAY, T_BEGIN, T_CASE, T_CONST, T_DO, T_ELSE, T_END, T_FALSE, T_FOR, T_FUNC, T_IF, T_IN, T_NIL, T_NOT, T_OF, T_OR, T_PROCEDURE, T_PROG, T_THEN, T_TRUE, T_TYPE, T_USES, T_VAR, T_WHILE, T_WRITELN,
                 T_COMMA, T_PERIOD, T_CIRCUMFLEX, T_DBLPERIOD, T_LPAREN, T_RPAREN, T_LBRACK, T_RBRACK, T_COLON, T_SEMICOLON, T_UNKNOWN);
 
 var
@@ -22,7 +22,6 @@ var
   lexeme: string;
   lineno, colno, colno_prev, col_start: integer;
   _flag: boolean;
-  tokAvailable: boolean;
 
 function ScanningDone: boolean;
 begin
@@ -117,7 +116,7 @@ end;
 
 function IsValidIdentChar(c: char; includeDigits: boolean): boolean;
 begin
-  if includeDigits then IsValidIdentChar := IsAlpha(c) or (c = '_')
+  if not includeDigits then IsValidIdentChar := IsAlpha(c) or (c = '_')
   else IsValidIdentChar := IsAlpha(c) or IsDigit(c) or (c = '_');
 end;
 
@@ -331,18 +330,24 @@ begin
   kwords[5] := 'do';
   kwords[6] := 'else';
   kwords[7] := 'end';
-  kwords[8] := 'function';
-  kwords[9] := 'if';
-  kwords[10] := 'nil';
-  kwords[11] := 'not';
-  kwords[12] := 'of';
-  kwords[13] := 'or';
-  kwords[14] := 'procedure';
-  kwords[15] := 'program';
-  kwords[16] := 'then';
-  kwords[17] := 'var';
-  kwords[18] := 'while';
-  kwords[19] := 'writeln';
+  kwords[8] := 'false';
+  kwords[9] := 'for';
+  kwords[10] := 'function';
+  kwords[11] := 'if';
+  kwords[12] := 'in';
+  kwords[13] := 'nil';
+  kwords[14] := 'not';
+  kwords[15] := 'of';
+  kwords[16] := 'or';
+  kwords[17] := 'procedure';
+  kwords[18] := 'program';
+  kwords[19] := 'then';
+  kwords[20] := 'true';
+  kwords[21] := 'type';
+  kwords[22] := 'uses';
+  kwords[23] := 'var';
+  kwords[24] := 'while';
+  kwords[25] := 'writeln';
 end;
 
 procedure CleanUp;
@@ -354,8 +359,7 @@ begin
   Init;
   while true do
   begin
-    tokAvailable := GetToken;
-    if not tokAvailable then
+    if not GetToken then
       Break
     else
     begin
